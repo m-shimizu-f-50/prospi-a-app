@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/prospi_a_app
+    username: prospi
+    password: prospi
+  jpa:
+    hibernate:
+      ddl-auto: validate
