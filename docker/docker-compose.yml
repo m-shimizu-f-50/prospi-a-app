@@ -1,0 +1,16 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: prospi-mysql
+    environment:
+      MYSQL_DATABASE: prospi_a_app
+      MYSQL_USER: prospi
+      MYSQL_PASSWORD: prospi
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
