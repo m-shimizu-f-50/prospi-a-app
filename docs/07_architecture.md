@@ -41,8 +41,11 @@ MVPでは認証を挟まない([02_requirements.md](./02_requirements.md) 6章�
 | UIライブラリ | MUI(Material UI) | 現行踏襲。3.のコンポーネント分割方針に沿って再構成する |
 | データ取得 | TanStack Query | 現行踏襲。`axios-case-converter`は[06_api_design.md](./06_api_design.md)の方針により廃止 |
 | バックエンド | Spring Boot 3系(最新安定版) | 実装着手時にその時点の最新安定版を確認して固定する |
-| 言語(バックエンド) | Java 21(LTS) | Spring Boot 3系の要件を満たすLTS版を採用 |
+| 言語(バックエンド) | Java 21(LTS) | Spring Boot 3系の要件を満たすLTS版を採用。選定理由は[ADR-0001](./decisions/0001-backend-tooling.md) |
+| ビルドツール(バックエンド) | Maven | 設定が明示的で学習しやすいことを重視。選定理由は[ADR-0001](./decisions/0001-backend-tooling.md) |
+| Lombok | 不使用 | 学習段階のため、getter/setter等を自動生成せず明示的に書く。理由は[ADR-0001](./decisions/0001-backend-tooling.md) |
 | ORM | Spring Data JPA | エンティティとDBのマッピングに使用 |
+| スキーマ管理 | Flyway | Hibernateの自動DDL生成(`ddl-auto`)は使わず、バージョン管理されたSQLでスキーマを厳密に管理する。選定理由は[ADR-0002](./decisions/0002-schema-migration-tool.md) |
 | DB | MySQL 8.0系 | ヒアリングで確定 |
 | コンテナ | Docker / Docker Compose | ローカル開発環境の統一に使用。`docker/`配下に構成を置く(既定のディレクトリ構成通り) |
 
@@ -95,6 +98,18 @@ com.prospia.backend
 
 [03_replace_plan.md](./03_replace_plan.md) 4章で改善点に挙げた「巨大な画面コンポーネント(`rank/page.tsx`1064行等)」を避けるため、機能単位でコンポーネントを分割する。
 
+### 4.1 プロジェクト作成時のオプション選定
+
+`create-next-app`実行時に以下のオプションを選択した。
+
+| オプション | 選定理由 |
+|-----------|---------|
+| `--typescript` | [02_requirements.md](./02_requirements.md)の型安全方針に沿う。現行フロントもTypeScript |
+| `--app` | 本章のApp Router構成(下記ディレクトリ構成)に対応するため必須 |
+| `--tailwind` | 現行アプリと同じ(MUIと併用する) |
+| `--src-dir` | ソースコードをルート直下ではなく`src/`にまとめ、設定ファイル類と分離するため |
+| `--import-alias "@/*"` | `../../../components/X`のような深い相対パスのimportを避けるため |
+
 ```
 frontend/src/app/
 ├── players/
@@ -128,6 +143,8 @@ frontend/src/app/
 | `mysql` | MySQL 8.0系。ボリュームでデータ永続化 |
 | `backend` | Spring Boot アプリケーション |
 | `frontend` | Next.js アプリケーション(開発時は `npm run dev` をそのまま使う運用も可) |
+
+**現時点(T1)の実装状況**: 上記のうち`mysql`のみを実際にコンテナ化しており、`backend`/`frontend`は開発中のホットリロード(コード変更の即時反映)を優先して、それぞれ`./mvnw spring-boot:run` / `npm run dev`でローカルに直接起動している。backend/frontendのコンテナ化は、本番相当の環境で動作確認したくなったタイミング(P2以降、または6章のクラウドデプロイ準備時)に着手する段階的な方針とする。
 
 環境変数(DB接続情報等)は `.env`(gitignore対象)で管理し、Spring Bootの`application.yml`はプロファイル分割する。
 
