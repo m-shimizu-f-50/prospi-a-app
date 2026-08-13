@@ -12,5 +12,17 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
 
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: prospi-phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: prospi
+      PMA_PASSWORD: prospi
+    ports:
+      - '8081:80'
+    depends_on:
+      - mysql
+
 volumes:
   mysql_data:

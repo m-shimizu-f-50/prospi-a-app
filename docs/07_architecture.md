@@ -143,8 +143,11 @@ frontend/src/app/
 | `mysql` | MySQL 8.0系。ボリュームでデータ永続化 |
 | `backend` | Spring Boot アプリケーション |
 | `frontend` | Next.js アプリケーション(開発時は `npm run dev` をそのまま使う運用も可) |
+| `phpmyadmin` | MySQLをブラウザから確認するためのローカル開発専用ツール(`localhost:8081`) |
 
-**現時点(T1)の実装状況**: 上記のうち`mysql`のみを実際にコンテナ化しており、`backend`/`frontend`は開発中のホットリロード(コード変更の即時反映)を優先して、それぞれ`./mvnw spring-boot:run` / `npm run dev`でローカルに直接起動している。backend/frontendのコンテナ化は、本番相当の環境で動作確認したくなったタイミング(P2以降、または6章のクラウドデプロイ準備時)に着手する段階的な方針とする。
+**現時点(T1)の実装状況**: 上記のうち`mysql`と`phpmyadmin`を実際にコンテナ化しており、`backend`/`frontend`は開発中のホットリロード(コード変更の即時反映)を優先して、それぞれ`./mvnw spring-boot:run` / `npm run dev`でローカルに直接起動している。backend/frontendのコンテナ化は、本番相当の環境で動作確認したくなったタイミング(P2以降、または6章のクラウドデプロイ準備時)に着手する段階的な方針とする。
+
+**phpmyadminについての注記**: `PMA_HOST: mysql`のように、docker-compose内のサービス名をそのままホスト名として使ってMySQLに接続している(Docker Composeが同一ネットワーク内のサービス名を名前解決してくれるため)。phpMyAdminは開発中にテーブル内容を目視確認するための**ローカル開発専用ツール**であり、6章の将来のクラウドデプロイ構成には含めない(DBへの不要な公開経路を作らないため)。
 
 環境変数(DB接続情報等)は `.env`(gitignore対象)で管理し、Spring Bootの`application.yml`はプロファイル分割する。
 
