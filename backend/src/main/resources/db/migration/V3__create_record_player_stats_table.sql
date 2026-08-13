@@ -1,0 +1,20 @@
+CREATE TABLE record_player_stats (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    record_id BIGINT NOT NULL,
+    player_id BIGINT NOT NULL,
+    `order` TINYINT UNSIGNED NULL,
+    at_bats INT UNSIGNED NULL,
+    hits INT UNSIGNED NULL,
+    doubles INT UNSIGNED NULL,
+    triples INT UNSIGNED NULL,
+    home_runs INT UNSIGNED NULL,
+    rbi INT UNSIGNED NULL,
+    wins INT UNSIGNED NULL,
+    losses INT UNSIGNED NULL,
+    saves INT UNSIGNED NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT uq_record_player UNIQUE (record_id, player_id),
+    CONSTRAINT fk_record_player_stats_record FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE,
+    CONSTRAINT fk_record_player_stats_player FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
+);
