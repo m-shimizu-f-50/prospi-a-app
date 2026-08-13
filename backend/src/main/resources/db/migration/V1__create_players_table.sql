@@ -1,0 +1,23 @@
+CREATE TABLE players (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    position VARCHAR(10) NOT NULL,
+    series VARCHAR(255) NULL,
+    type ENUM('batter', 'pitcher') NOT NULL,
+    spirit INT NOT NULL,
+    limit_break TINYINT NOT NULL,
+    average DECIMAL(5,3) NULL,
+    trajectory VARCHAR(10) NULL,
+    meet INT NULL,
+    power INT NULL,
+    speed INT NULL,
+    era DECIMAL(4,2) NULL,
+    velocity INT NULL,
+    control INT NULL,
+    stamina INT NULL,
+    skill1 INT NULL,
+    skill2 INT NULL,
+    skill3 INT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
