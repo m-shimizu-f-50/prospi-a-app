@@ -76,7 +76,7 @@ public class Player {
    * 選手エンティティを生成する.
    */
   public Player(String name, String position, String series, String type, Integer spirit,
-    Byte limitBreak, BigDecimal average, String trajectory, Integer meet, Integer power,
+      Byte limitBreak, BigDecimal average, String trajectory, Integer meet, Integer power,
       Integer speed, BigDecimal era, Integer velocity, Integer control, Integer stamina,
       Integer skill1, Integer skill2, Integer skill3) {
     this.name = name;
