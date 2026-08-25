@@ -8,8 +8,8 @@
 
 ## 1. 設計方針
 
-- **RESTfulに統一する**: 現行の `/players/create` のような動詞入りパスを廃止し、リソース名+HTTPメソッドで表現する(CLAUDE.mdの方針に準拠)。
-- **JSONの命名規則はcamelCaseに統一する**: Spring Boot(Jackson)のデフォルト規約に合わせる。これにより、現行フロントの`axios-case-converter`(snake↔camel変換ミドルウェア)は**廃止**する。DBカラム(snake_case)とAPIレスポンス(camelCase)の変換はSpring Boot側(Jacksonのデフォルト動作)に任せる。
+- **RESTfulに統一する**: すべてのエンドポイントを「リソース名+HTTPメソッド」の組み合わせで表現し、パスに動詞を含めない(CLAUDE.mdの「APIはRESTfulに設計する」方針に準拠)。
+- **JSONの命名規則はcamelCaseに統一する**: Spring Boot(Jackson)のデフォルト規約に合わせる。DBカラム(snake_case)とAPIレスポンス(camelCase)の変換はSpring Boot側(Jacksonのデフォルト動作)に任せるため、フロント側でsnake↔camel変換用のライブラリを別途持つ必要がない。
 - **ベースパス**: `/api`(バージョニングは行わない。個人利用アプリのため、必要になった時点で検討する)
 - **対戦記録のネストリソースとして選手成績を扱う**: `record_player_stats` は単独のURLを持たず、`/api/records/{id}/player-stats` という対戦記録配下のリソースとして表現する(DB設計の「箱(records)+中身(record_player_stats)」という構造をAPIにもそのまま反映する)。
 
@@ -48,8 +48,6 @@
 | GET | `/api/players/{id}` | 選手詳細取得 |
 | PUT | `/api/players/{id}` | 選手情報を更新 |
 | DELETE | `/api/players/{id}` | 選手を削除 |
-
-**現行からの変更点**: `POST /players/create` → `POST /players` に統一(RESTful化)。
 
 ### 3.2 対戦記録(records)
 
