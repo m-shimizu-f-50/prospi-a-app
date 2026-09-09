@@ -35,9 +35,7 @@ on:
 
 **`develop`または`main`宛のPull Requestが作成・更新されたときのみ**実行される。`develop`への直接pushでは実行されない。
 
-これは[ADR-0003](./decisions/0003-ci-setup.md)で決めた通り、このプロジェクトの開発フロー(`develop`に直接コミット→まとまったら`develop`→`main`のPRを作成)に合わせた設計。**「`main`に昇格させる前に壊れていないか確認する」タイミングでCIが働く**、という位置づけになる。
-
-裏を返すと、`develop`への日々の直接コミットではCIの恩恵を受けられない。CIの動作だけを確認したい場合は、一時的にフィーチャーブランチを切って`develop`宛にPRを作る必要がある(通常の開発フローに変更はない)。
+これは[ADR-0003](./decisions/0003-ci-setup.md)策定時点の開発フロー(`develop`に直接コミット→まとまったら`develop`→`main`のPRを作成)を前提にした設計だった。その後[ADR-0004](./decisions/0004-branching-strategy.md)で「フィーチャーブランチ→`develop`→`main`」の2段階運用に変更されたため、現在はすべての変更(ドキュメント更新等の小さなものも含む)がフィーチャーブランチ経由の`develop`宛PRとして作られ、その都度CIが働く。6章の通り、`develop`への直接pushはブランチ保護ルールで技術的に禁止しているため、「CIを経由しない変更」自体が原理的に発生しない構成になっている。
 
 ## 3. backendジョブの詳細
 
@@ -141,7 +139,41 @@ CI導入の過程で実際に踏んだ問題を記録しておく(同種の問�
 | CI導入PRを誤って`main`に直接マージし、`develop`が取り残された | このプロジェクトは`develop`直接コミット→`develop`→`main`のPRという運用だが、CI動作確認のため一時的にフィーチャーブランチ+PRを使った際、GitHubのデフォルトbase branch(`main`)のまま作成してしまった | `develop`が`main`の祖先(fast-forward可能)だったため、`git merge origin/main`で`develop`を`main`まで進めて解消。以後はPR作成時に必ずbase branchを`develop`に変更することを徹底 |
 | backendジョブの`Test`ステップが失敗 | `@SpringBootTest`がアプリ全体を起動しようとするが、CI環境にMySQLが無くDB接続エラー | `services`でMySQL 8.0のコンテナを一時起動し、`SPRING_PROFILES_ACTIVE=local`でテスト時のDB接続先を指定(3.3節) |
 
-## 6. 未決定・今後の課題
+## 6. ブランチ保護ルール(`develop`)
+
+CIが実行されること自体と、「CIが失敗したらマージできない」ことは別問題である。GitHubはブランチ保護ルール(Rulesets)を明示的に設定しない限り、CIの結果に関わらずマージ操作(や直接push)を許可してしまう。[ADR-0004](./decisions/0004-branching-strategy.md)の「フィーチャーブランチ→`develop`→`main`」運用と、本ドキュメントのCIチェックを、実際に**強制**するために、`develop`ブランチにRulesetを設定した。
+
+### 6.1 設定内容
+
+GitHub の Settings → Branches → Rulesets で、対象を`develop`ブランチとして以下を有効化した。
+
+| ルール | 効果 |
+|---|---|
+| Restrict deletions | `develop`ブランチの削除を禁止 |
+| Require a pull request before merging | 直接pushを禁止し、PR経由のマージのみ許可 |
+| Require status checks to pass | 指定したステータスチェックが成功しないとマージ不可。`backend`・`frontend`(`.github/workflows/ci.yml`のジョブ名)を必須チェックとして登録 |
+| Block force pushes | 履歴の強制書き換えを禁止 |
+
+### 6.2 設定時にハマった落とし穴(トラブルシューティング記録)
+
+Ruleset作成直後、`develop`への直接pushが**成功してしまう**という現象が発生した。原因は1つではなく、2段階で判明した。
+
+| 症状 | 原因 | 対応 |
+|------|------|------|
+| Ruleset編集画面に "This ruleset does not target any resources and will not be applied." という警告が出ていた | **Target branches**(このRulesetをどのブランチに適用するか)に`develop`を登録し忘れていた。ルール自体(Require a pull requestなど)を有効にしても、適用対象が空だと何も強制されない | Target branches → Add target → Add by pattern で`develop`を追加 |
+| Target branchesを設定した後も直接pushが通ってしまった | **Enforcement status**が`Active`になっていなかった(`Evaluate`等のままだと、違反をログに記録するだけで実際には拒否しない) | Enforcement statusを`Active`に変更 |
+
+上記2点を修正した後、`develop`への直接push(空コミットで検証)が以下のエラーで正しく拒否されることを確認した。
+
+```
+remote: error: GH013: Repository rule violations found for refs/heads/develop.
+remote: - Changes must be made through a pull request.
+remote: - 2 of 2 required status checks are expected.
+```
+
+**教訓**: Rulesetは「ルールにチェックを入れただけでは機能しない」。**Target branches(適用対象)**と**Enforcement status(有効化状態)**の両方が正しく設定されているかを、実際に保護対象への直接push(空コミット等、実害のない変更)を試して動作確認するまで安心しないこと。
+
+## 7. 未決定・今後の課題
 
 - `frontend`ジョブにテストが無い(現状ESLintとビルド確認のみ)。フロントエンドのテストコードを書き始めたら、テスト実行ステップを追加する
 - モノレポ全体でbackend/frontend変更の有無に関わらず両ジョブが毎回実行される。将来的に`paths`フィルタで「変更があった方のジョブだけ実行する」最適化を検討してもよい(現時点では規模が小さいため未対応)
